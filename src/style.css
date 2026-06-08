@@ -1,0 +1,12 @@
+* {
+  box-sizing: border-box;
+  text-decoration: none;
+  outline: none;
+}
+
+html {
+  font-family: 'Microsoft JhengHei';
+}
+body {
+  margin: 0;
+}

@@ -1,5 +1,10 @@
+import App from '@/app.vue';
+import { i18n } from '@/core/i18n';
+import '@/style.css';
 import { createApp } from 'vue';
-import App from './app.vue';
-import './style.css';
 
-createApp(App).mount('#app');
+const app = createApp(App);
+
+app.use(i18n);
+
+app.mount('#app');
