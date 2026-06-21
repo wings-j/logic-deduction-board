@@ -1,4 +1,7 @@
 {
   "File": "File",
-  "Open": "Open"
+  "Open": "Open",
+  "Save": "Save",
+  "Start": "Start",
+  "End": "End"
 }

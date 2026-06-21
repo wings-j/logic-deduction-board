@@ -6,6 +6,10 @@ import { createI18n } from 'vue-i18n';
 type Language = 'en' | 'zh';
 
 const key = 'language';
+const languages: { name: string; value: Language }[] = [
+  { name: 'English', value: 'en' },
+  { name: '简体中文', value: 'zh' }
+];
 
 let language = ref<Language>((window.localStorage.getItem(key) ?? window.navigator.language.slice(0, 2)) as Language);
 let i18n = createI18n({
@@ -23,4 +27,4 @@ watch(language, () => {
   window.localStorage.setItem(key, language.value);
 });
 
-export { i18n, language };
+export { i18n, language, languages };
