@@ -1,10 +1,19 @@
 import { Cell, Graph, type ValidateConnectionArgs } from '@antv/x6';
 import type { Port } from '@antv/x6/lib/model/port';
 
-const portAttributes = {
+const outputPortAttributes = {
   circle: {
     r: 6,
-    stroke: 'var(--color_border-dark)',
+    stroke: 'var(--color_blue)',
+    strokeWidth: 2,
+    magnet: true
+  }
+};
+const inputPortAttributes = {
+  circle: {
+    r: 6,
+    stroke: 'none',
+    fill: 'var(--color_blue)',
     magnet: true
   }
 };
@@ -13,7 +22,10 @@ const portAttributes = {
  * Entity
  */
 class Entity {
-  static map: Record<string, { validateConnectionOfDirection: (direction: 'source' | 'target', cell: Cell, port: Port) => boolean }> = {};
+  static map: Record<
+    string,
+    { validateConnectionOfDirection: (direction: 'source' | 'target', sourceCell: Cell, sourcePort: Port, targetCell: Cell, targetPort: Port) => boolean }
+  > = {};
 
   /**
    * From
@@ -65,8 +77,8 @@ class Entity {
       let targetShape = args.targetCell.shape as EntityType;
 
       return (
-        this.map[sourceShape].validateConnectionOfDirection('source', sourceCell, sourcePort) &&
-        this.map[targetShape].validateConnectionOfDirection('target', targetCell, targetPort)
+        this.map[sourceShape].validateConnectionOfDirection('source', sourceCell, sourcePort, targetCell, targetPort) &&
+        this.map[targetShape].validateConnectionOfDirection('target', sourceCell, sourcePort, targetCell, targetPort)
       );
     } else {
       return false;
@@ -85,7 +97,7 @@ class Entity {
   }
 }
 
-type EntityType = 'start' | 'end';
+type EntityType = 'start' | 'end' | 'thought' | 'clue';
 
 /**
  * Start Entity
@@ -106,26 +118,24 @@ class StartEntity extends Entity {
    */
   static createNode(graph: Graph) {
     let entity = new StartEntity();
-    let node = graph.createNode({
-      shape: 'start',
-      width: 120,
-      height: 40,
-      ports: { groups: { output: { position: 'right', attrs: portAttributes } }, items: [{ group: 'output' }] },
-      data: { entity }
-    });
+    let node = graph.createNode({ shape: 'start', data: { entity } });
 
     return node;
   }
   /**
    * Validate Connection of Direction
-   * @param [direction] Direction
-   * @param [cell] Cell
-   * @param [port] Port
+   * @param [role] Role
+   * @param [sourceCell] Source Cell
+   * @param [sourcePort] Source Port
+   * @param [targetCell] Target Cell
+   * @param [targetPort] Target Port
    * @return Result
    */
-  static validateConnectionOfDirection(direction: 'source' | 'target', cell: Cell, port: Port): boolean {
-    if (direction === 'source') {
-      return true;
+  static validateConnectionOfDirection(role: 'source' | 'target', _: Cell, __: Port, targetCell: Cell, targetPort: Port): boolean {
+    if (role === 'source') {
+      let targetEntity = targetCell.data.entity as Entity;
+
+      return ['end', 'thought'].includes(targetEntity.type) && targetPort.group === 'input';
     } else {
       return false;
     }
@@ -157,27 +167,27 @@ class EndEntity extends Entity {
    */
   static createNode(graph: Graph) {
     let entity = new EndEntity();
-    let node = graph.createNode({
-      shape: 'end',
-      width: 120,
-      height: 40,
-      ports: { groups: { input: { position: 'left', attrs: portAttributes } }, items: [{ group: 'input' }] },
-      data: { entity }
-    });
+    let node = graph.createNode({ shape: 'end', data: { entity } });
 
     return node;
   }
   /**
    * Validate Connection
-   * @param [direction] Direction
-   * @param [cell] Cell
-   * @param [port] Port
+   * @param [role] Role
+   * @param [sourceCell] Source Cell
+   * @param [sourcePort] Source Port
+   * @param [targetCell] Target Cell
+   * @param [targetPort] Target Port
    * @return Result
    */
-  static validateConnectionOfDirection(direction: 'source' | 'target', cell: Cell, port: Port): boolean {
-    // TODO
+  static validateConnectionOfDirection(role: 'source' | 'target', sourceCell: Cell, sourcePort: Port, _: Cell, __: Port): boolean {
+    if (role === 'target') {
+      let sourceEntity = sourceCell.data.entity as Entity;
 
-    return true;
+      return ['start', 'thought'].includes(sourceEntity.type) && sourcePort.group === 'output';
+    } else {
+      return false;
+    }
   }
 
   /**

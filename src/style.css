@@ -13,8 +13,11 @@
   --radius_sub: 6px;
   --radius_main: 8px;
   --color_red: #ff4040;
+  --color_orange: #ffa500;
   --color_green: #84e046;
-  --color_border-main: #d3d3d3;
+  --color_blue: #3cb6fd;
+  --color_border: #d3d3d3;
+  --color_border-light: #eeeeee;
   --color_border-dark: #aaaaaa;
   --color_background: #f5f5f5;
 }

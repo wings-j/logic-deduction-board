@@ -3,5 +3,17 @@
   "Open": "Open",
   "Save": "Save",
   "Start": "Start",
-  "End": "End"
+  "End": "End",
+  "Shortcut": "Shortcut",
+  "Keys": "Keys",
+  "Function": "Function",
+  "Delete": "Delete",
+  "Undo": "Undo",
+  "Copy": "Copy",
+  "Paste": "Paste",
+  "Redo": "Redo",
+  "MouseMove": "Mouse Move",
+  "SelectMultiple": "Select Multiple",
+  "SelectSingle": "Select Single",
+  "MouseClick": "Mouse Click"
 }

@@ -3,5 +3,17 @@
   "Open": "打开",
   "Save": "保存",
   "Start": "起始",
-  "End": "结束"
+  "End": "结束",
+  "Shortcut": "快捷键",
+  "Keys": "按键",
+  "Function": "功能",
+  "Copy": "复制",
+  "Delete": "删除",
+  "Paste": "粘贴",
+  "Undo": "撤销",
+  "Redo": "重做",
+  "MouseMove": "鼠标移动",
+  "SelectMultiple": "多选",
+  "SelectSingle": "单选",
+  "MouseClick": "鼠标点击"
 }

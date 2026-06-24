@@ -20,6 +20,7 @@ let i18n = createI18n({
     en: En
   }
 });
+let t = i18n.global.t;
 
 watch(language, () => {
   i18n.global.locale = language.value;
@@ -27,4 +28,4 @@ watch(language, () => {
   window.localStorage.setItem(key, language.value);
 });
 
-export { i18n, language, languages };
+export { i18n, language, languages, t };
