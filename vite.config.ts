@@ -2,6 +2,7 @@ import Vue from '@vitejs/plugin-vue';
 import { resolve } from 'path';
 import UnpluginElementPlus from 'unplugin-element-plus/vite';
 import { defineConfig } from 'vite';
+import SvgLoader from 'vite-svg-loader';
 
 export default defineConfig({
   base: '',
@@ -10,5 +11,5 @@ export default defineConfig({
       '@': resolve(__dirname, 'src')
     }
   },
-  plugins: [Vue(), UnpluginElementPlus({})]
+  plugins: [Vue(), UnpluginElementPlus({}), SvgLoader()]
 });

@@ -15,5 +15,6 @@
   "MouseMove": "Mouse Move",
   "SelectMultiple": "Select Multiple",
   "SelectSingle": "Select Single",
-  "MouseClick": "Mouse Click"
+  "MouseClick": "Mouse Click",
+  "Thought": "Thought"
 }

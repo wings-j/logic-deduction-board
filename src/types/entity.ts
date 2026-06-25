@@ -1,23 +1,6 @@
 import { Cell, Graph, type ValidateConnectionArgs } from '@antv/x6';
 import type { Port } from '@antv/x6/lib/model/port';
 
-const outputPortAttributes = {
-  circle: {
-    r: 6,
-    stroke: 'var(--color_blue)',
-    strokeWidth: 2,
-    magnet: true
-  }
-};
-const inputPortAttributes = {
-  circle: {
-    r: 6,
-    stroke: 'none',
-    fill: 'var(--color_blue)',
-    magnet: true
-  }
-};
-
 /**
  * Entity
  */
@@ -40,6 +23,9 @@ class Entity {
       case 'end': {
         return EndEntity.from(raw);
       }
+      case 'thought': {
+        return ThoughtEntity.from(raw);
+      }
       default:
         throw new Error(`Unknown Entity Type: '${raw['type']}'`);
     }
@@ -57,6 +43,9 @@ class Entity {
       }
       case 'end': {
         return EndEntity.createNode(graph);
+      }
+      case 'thought': {
+        return ThoughtEntity.createNode(graph);
       }
       default:
         throw new Error(`Unknown Entity Type: '${type}'`);
@@ -197,9 +186,64 @@ class EndEntity extends Entity {
     super('end');
   }
 }
+/**
+ * Thought Entity
+ */
+class ThoughtEntity extends Entity {
+  /**
+   * From
+   * @param [raw] Raw
+   * @return Object
+   */
+  static from(raw: any): ThoughtEntity {
+    return Object.assign(new ThoughtEntity(), raw);
+  }
+  /**
+   * Create Node
+   * @param [graph] Graph
+   * @return Node
+   */
+  static createNode(graph: Graph) {
+    let entity = new ThoughtEntity();
+    let node = graph.createNode({ shape: 'thought', data: { entity } });
+
+    return node;
+  }
+  /**
+   * Validate Connection
+   * @param [role] Role
+   * @param [sourceCell] Source Cell
+   * @param [sourcePort] Source Port
+   * @param [targetCell] Target Cell
+   * @param [targetPort] Target Port
+   * @return Result
+   */
+  static validateConnectionOfDirection(role: 'source' | 'target', sourceCell: Cell, sourcePort: Port, targetCell: Cell, targetPort: Port): boolean {
+    if (role === 'source') {
+      let targetEntity = targetCell.data.entity as Entity;
+
+      return ['end', 'thought'].includes(targetEntity.type) && targetPort.group === 'input';
+    }
+    if (role === 'target') {
+      let sourceEntity = sourceCell.data.entity as Entity;
+
+      return ['start', 'thought'].includes(sourceEntity.type) && sourcePort.group === 'output';
+    } else {
+      return false;
+    }
+  }
+
+  /**
+   * Constructor
+   */
+  constructor() {
+    super('end');
+  }
+}
 
 Entity.map['start'] = StartEntity;
 Entity.map['end'] = EndEntity;
+Entity.map['thought'] = ThoughtEntity;
 
-export { EndEntity, Entity, StartEntity };
+export { EndEntity, Entity, StartEntity, ThoughtEntity };
 export type { EntityType };

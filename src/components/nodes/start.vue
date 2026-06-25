@@ -22,6 +22,8 @@
         font-size: var(--size_font-large);
         font-weight: bold;
         background-color: var(--color_red);
+        border-top-left-radius: var(--radius_sub);
+        border-bottom-left-radius: var(--radius_sub);
       "
     >
       <span>{{ $t('Start') }}</span>

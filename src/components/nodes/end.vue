@@ -25,6 +25,8 @@
         font-size: var(--size_font-large);
         font-weight: bold;
         background-color: var(--color_green);
+        border-top-right-radius: var(--radius_sub);
+        border-bottom-right-radius: var(--radius_sub);
       "
     >
       <span>{{ $t('End') }}</span>

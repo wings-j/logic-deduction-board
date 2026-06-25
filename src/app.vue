@@ -1,4 +1,7 @@
 <script setup lang="ts">
+  import Svg_End from '@/assets/images/templates/end.svg?component';
+  import Svg_Start from '@/assets/images/templates/start.svg?component';
+  import Svg_Thought from '@/assets/images/templates/thought.svg?component';
   import { language, languages } from '@/core/i18n';
   import { initiate } from '@/core/initiate';
   import { shortcuts } from '@/data/shortcuts';
@@ -16,7 +19,7 @@
   let TeleportContainer = getTeleport();
 
   onMounted(() => {
-    let objects = initiate('#container');
+    let objects = initiate('.container');
     graph = objects.graph;
     dnd = objects.dnd;
 
@@ -126,7 +129,17 @@
     </el-dropdown>
     <el-popover width="300px">
       <template #reference>
-        <div style="display: flex; align-items: center; gap: var(--gap_middle); padding: 0 var(--gap_sub); font-size: var(--size_font-sub); cursor: pointer">
+        <div
+          style="
+            display: flex;
+            align-items: center;
+            gap: var(--gap_middle);
+            padding: 0 var(--gap_sub);
+            color: var(--el-text-color-regular);
+            font-size: var(--size_font-sub);
+            cursor: pointer;
+          "
+        >
           <img style="width: var(--size_font-main); height: var(--size_font-main)" src="@/assets/images/shortcut.svg" />
           <span>{{ $t('Shortcut') }}</span>
         </div>
@@ -150,7 +163,7 @@
       </el-table>
     </el-popover>
   </div>
-  <div id="container" style="height: calc(100vh - var(--el-menu-horizontal-height))"></div>
+  <div class="container" style="height: calc(100vh - var(--el-menu-horizontal-height))"></div>
   <TeleportContainer></TeleportContainer>
 
   <div
@@ -169,16 +182,16 @@
     "
   >
     <div class="template" @mousedown="handle_template_mousedown($event, 'start')">
-      <svg viewBox="0 0 100 100">
-        <polygon points="0,0 70,0 100,50 70,100, 0,100" fill="var(--color_red)" />
-      </svg>
-      <span>{{ $t('Start') }}</span>
+      <Svg_Start class="icon"></Svg_Start>
+      <span class="name">{{ $t('Start') }}</span>
     </div>
     <div class="template" @mousedown="handle_template_mousedown($event, 'end')">
-      <svg viewBox="0 0 100 100">
-        <polygon points="0,50 30,0 100,0 100,100, 30,100" fill="var(--color_green)" />
-      </svg>
-      <span>{{ $t('End') }}</span>
+      <Svg_End class="icon"></Svg_End>
+      <span class="name">{{ $t('End') }}</span>
+    </div>
+    <div class="template" @mousedown="handle_template_mousedown($event, 'thought')">
+      <Svg_Thought class="icon"></Svg_Thought>
+      <span class="name">{{ $t('Thought') }}</span>
     </div>
   </div>
 </template>
@@ -195,11 +208,11 @@
     cursor: grab;
     user-select: none;
 
-    svg {
+    .icon {
       width: var(--size_font-main);
       height: var(--size_font-main);
     }
-    span {
+    .name {
       font-size: var(--size_font-sub);
     }
   }
@@ -215,5 +228,10 @@
   }
   .menu-popover {
     --el-menu-active-color: var(--el-menu-text-color);
+  }
+  .container {
+    .el-textarea__inner {
+      height: 100%;
+    }
   }
 </style>

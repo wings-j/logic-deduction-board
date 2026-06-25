@@ -16,6 +16,8 @@
   --color_orange: #ffa500;
   --color_green: #84e046;
   --color_blue: #3cb6fd;
+  --color_blue-light: #84d2ff;
+  --color_blue-dark: #008fe2;
   --color_border: #d3d3d3;
   --color_border-light: #eeeeee;
   --color_border-dark: #aaaaaa;
@@ -26,6 +28,20 @@
   box-sizing: border-box;
   text-decoration: none;
   outline: none;
+
+  &::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  &::-webkit-scrollbar-track {
+    background-color: transparent;
+    border-radius: 10px;
+  }
+  &::-webkit-scrollbar-thumb {
+    background-color: var(--color_border);
+    border-radius: 4px;
+    cursor: default;
+  }
 }
 html {
   font-family: 'Microsoft JhengHei';
