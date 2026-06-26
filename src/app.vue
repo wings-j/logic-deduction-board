@@ -1,4 +1,5 @@
 <script setup lang="ts">
+  import Svg_Clue from '@/assets/images/templates/clue.svg?component';
   import Svg_End from '@/assets/images/templates/end.svg?component';
   import Svg_Start from '@/assets/images/templates/start.svg?component';
   import Svg_Thought from '@/assets/images/templates/thought.svg?component';
@@ -192,6 +193,10 @@
     <div class="template" @mousedown="handle_template_mousedown($event, 'thought')">
       <Svg_Thought class="icon"></Svg_Thought>
       <span class="name">{{ $t('Thought') }}</span>
+    </div>
+    <div class="template" @mousedown="handle_template_mousedown($event, 'clue')">
+      <Svg_Clue class="icon"></Svg_Clue>
+      <span class="name">{{ $t('Clue') }}</span>
     </div>
   </div>
 </template>

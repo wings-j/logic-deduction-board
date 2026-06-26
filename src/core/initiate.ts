@@ -26,7 +26,7 @@ function initiate(selector: string) {
           let portId = magnet.getAttribute('port');
           let port = cell.port.ports.find(a => a.id === portId);
 
-          return port?.group === 'output';
+          return ['output', 'provide'].includes(port?.group as any);
         },
         validateConnection: ev => {
           return Entity.validateConnection(ev);
@@ -36,8 +36,14 @@ function initiate(selector: string) {
           let edge: Edge;
           switch (type) {
             case 'start':
+            case 'thought':
               {
                 edge = graph.createEdge({ shape: 'think' });
+              }
+              break;
+            case 'clue':
+              {
+                edge = graph.createEdge({ shape: 'cue' });
               }
               break;
             default:
@@ -79,13 +85,15 @@ function initiate(selector: string) {
       graph.select(cells);
     });
     graph.on('cell:selected', ({ cell }: { cell: Cell }) => {
-      if (cell.shape === 'think') {
+      if (['think', 'cue'].includes(cell.shape)) {
         cell.attr('line', { stroke: 'var(--color_orange)' });
       }
     });
     graph.on('cell:unselected', ({ cell }: { cell: Cell }) => {
       if (cell.shape === 'think') {
         cell.attr('line', { stroke: 'var(--color_blue)' });
+      } else if (cell.shape === 'cue') {
+        cell.attr('line', { stroke: 'var(--color_purple)' });
       }
     });
 
