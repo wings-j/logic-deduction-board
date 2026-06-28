@@ -238,6 +238,9 @@ class ThoughtEntity extends Entity {
     }
   }
 
+  text = '';
+  active = true;
+
   /**
    * Constructor
    */
@@ -286,6 +289,8 @@ class ClueEntity extends Entity {
       return false;
     }
   }
+
+  text = '';
 
   /**
    * Constructor

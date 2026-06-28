@@ -2,6 +2,8 @@ import { shortcuts } from '@/data/shortcuts';
 import { Entity } from '@/types/entity';
 import { Cell, Clipboard, Dnd, Edge, Graph, History, Keyboard, Selection } from '@antv/x6';
 
+const selectionTime: Record<string, number> = {};
+
 /**
  * Initiate
  * @param [selector] Selector
@@ -20,7 +22,8 @@ function initiate(selector: string) {
         allowBlank: false,
         allowEdge: false,
         allowNode: false,
-        connector: { name: 'smooth' },
+        router: { name: 'manhattan', args: { padding: { left: 16, right: 16, top: 16, bottom: 16 } } },
+        connector: { name: 'rounded', args: { radius: 8 } },
         snap: { radius: 30 },
         validateMagnet: ({ cell, magnet }) => {
           let portId = magnet.getAttribute('port');
@@ -65,31 +68,48 @@ function initiate(selector: string) {
     });
     graph.bindKey(shortcuts.undo.keys.join('+'), () => {
       graph.undo();
-
-      return false;
     });
     graph.bindKey(shortcuts.redo.keys.join('+'), () => {
       graph.redo();
-
-      return false;
     });
     graph.bindKey(shortcuts.copy.keys.join('+'), () => {
       let cells = graph.getSelectedCells();
       graph.copy(cells);
-
-      return false;
     });
     graph.bindKey(shortcuts.paste.keys.join('+'), () => {
       let cells = graph.paste();
       graph.cleanSelection();
       graph.select(cells);
     });
+    graph.on('cell:click', ({ cell }) => {
+      const unselect = () => {
+        if (graph.isSelected(cell) && Date.now() - selectionTime[cell.id] > 100) {
+          graph.unselect(cell);
+        }
+      };
+
+      if (['start', 'end', 'thought', 'clue'].includes(cell.shape)) {
+        window.document.querySelector(`.x6-widget-selection-box[data-cell-id="${cell.id}"]`)?.addEventListener(
+          'click',
+          () => {
+            unselect();
+          },
+          { once: true }
+        );
+      } else if (['think', 'cue'].includes(cell.shape)) {
+        unselect();
+      }
+    });
     graph.on('cell:selected', ({ cell }: { cell: Cell }) => {
+      selectionTime[cell.id] = Date.now();
+
       if (['think', 'cue'].includes(cell.shape)) {
         cell.attr('line', { stroke: 'var(--color_orange)' });
       }
     });
     graph.on('cell:unselected', ({ cell }: { cell: Cell }) => {
+      delete selectionTime[cell.id];
+
       if (cell.shape === 'think') {
         cell.attr('line', { stroke: 'var(--color_blue)' });
       } else if (cell.shape === 'cue') {

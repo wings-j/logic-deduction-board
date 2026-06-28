@@ -1,3 +1,5 @@
+/// <reference types="vite-svg-loader" />
+
 import type { Entity } from '@/types/entity';
 import type { Graph, Node } from '@antv/x6';
 import type { PortManager } from '@antv/x6/lib/model/port';
@@ -21,14 +23,6 @@ declare global {
 
   interface GetNode {
     (): Node;
-  }
-
-  declare module '*.svg?component' {
-    import type { DefineComponent } from 'vue';
-
-    const component: DefineComponent<{}, {}, any>;
-
-    export default component;
   }
 }
 

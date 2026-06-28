@@ -1,14 +1,4 @@
-<script setup lang="ts">
-  import { Node } from '@antv/x6';
-  import { inject, onMounted } from 'vue';
-
-  const getNode = inject('getNode') as GetNode;
-  let node: Node;
-
-  onMounted(() => {
-    node = getNode();
-  });
-</script>
+<script setup lang="ts"></script>
 
 <template>
   <div style="display: flex; height: 100%">

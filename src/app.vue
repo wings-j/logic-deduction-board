@@ -3,27 +3,41 @@
   import Svg_End from '@/assets/images/templates/end.svg?component';
   import Svg_Start from '@/assets/images/templates/start.svg?component';
   import Svg_Thought from '@/assets/images/templates/thought.svg?component';
-  import { language, languages } from '@/core/i18n';
+  import { language, languages, t } from '@/core/i18n';
   import { initiate } from '@/core/initiate';
   import { shortcuts } from '@/data/shortcuts';
   import { Entity, type EntityType } from '@/types/entity';
   import { Project } from '@/types/project';
   import { Dnd, Graph } from '@antv/x6';
   import { getTeleport } from '@antv/x6-vue-shape';
-  import { ElDropdown, ElDropdownItem, ElDropdownMenu, ElMenu, ElMenuItem, ElPopover, ElSubMenu, ElTable, ElTableColumn } from 'element-plus';
-  import { onMounted, ref } from 'vue';
+  import { useDebounceFn } from '@vueuse/core';
+  import { clone } from '@wings-j/clone';
+  import { ElDropdown, ElDropdownItem, ElDropdownMenu, ElMenu, ElMenuItem, ElMessage, ElPopover, ElSubMenu, ElTable, ElTableColumn } from 'element-plus';
+  import { isEqual } from 'es-toolkit';
+  import { onBeforeUnmount, onMounted, ref } from 'vue';
 
   const handle = ref<FileSystemFileHandle>();
   const project = ref<Project>(new Project());
+  let origin: Project = clone(project.value);
   let graph: Graph;
   let dnd: Dnd;
   let TeleportContainer = getTeleport();
+  let throttledUpdate = useDebounceFn(update, 1000);
+
+  if (import.meta.hot) {
+    handle.value = import.meta.hot.data['handle'];
+
+    open();
+  }
 
   onMounted(() => {
     let objects = initiate('.container');
     graph = objects.graph;
     dnd = objects.dnd;
 
+    graph.on('cell:added', throttledUpdate);
+    graph.on('cell:removed', throttledUpdate);
+    graph.on('cell:changed', throttledUpdate);
     graph.on('scale', () => {
       let { sx, sy } = graph.scale();
       project.value.transform.sx = sx;
@@ -34,8 +48,41 @@
       project.value.transform.tx = tx;
       project.value.transform.ty = ty;
     });
+
+    window.addEventListener('keydown', handle_keydown);
+    window.addEventListener('beforeunload', handle_unload);
+  });
+  onBeforeUnmount(() => {
+    if (import.meta.hot) {
+      import.meta.hot.data['handle'] = handle.value;
+    }
+
+    window.removeEventListener('keydown', handle_keydown);
+    window.removeEventListener('beforeunload', handle_unload);
   });
 
+  /**
+   * Handle Keyup
+   * @param [ev] Event
+   */
+  async function handle_keydown(ev: KeyboardEvent) {
+    if (ev.key.toLowerCase() === 's' && ev.ctrlKey) {
+      ev.preventDefault();
+
+      await save();
+
+      ElMessage({ message: t('ProjectSaved'), type: 'success' });
+    }
+  }
+  /**
+   * Handle Unload
+   * @param [ev] Event
+   */
+  function handle_unload(ev: BeforeUnloadEvent) {
+    if (!isEqual(project.value, origin)) {
+      ev.preventDefault();
+    }
+  }
   /**
    * Handle Menu Select
    * @param [ev] Index
@@ -47,31 +94,13 @@
           {
             let res = await window.showOpenFilePicker({ types: [{ accept: { 'application/json': ['.json'] } }] });
             handle.value = res[0];
-            let json = JSON.parse(await (await handle.value.getFile()).text());
-            project.value = Project.from(json);
 
-            graph.fromJSON(project.value.cells);
-            if (project.value.transform) {
-              graph.scale(project.value.transform.sx, project.value.transform.sy);
-              graph.translate(project.value.transform.tx, project.value.transform.ty);
-            }
+            await open();
           }
           break;
         case 'save':
           {
-            let json = graph.toJSON();
-            project.value.cells = json.cells;
-
-            if (handle.value) {
-              let stream = await handle.value.createWritable();
-              await stream.write(JSON.stringify(project.value));
-              await stream.close();
-            } else {
-              handle.value = await window.showSaveFilePicker({ types: [{ accept: { 'application/json': ['.json'] } }], suggestedName: 'logic-deduction-project.json' });
-              let stream = await handle.value.createWritable();
-              await stream.write(JSON.stringify(project.value));
-              await stream.close();
-            }
+            save();
           }
           break;
       }
@@ -90,6 +119,47 @@
    */
   async function handle_template_mousedown(ev: MouseEvent, type: EntityType) {
     dnd.start(Entity.createNode(graph, type), ev);
+  }
+
+  /**
+   * Open
+   */
+  async function open() {
+    if (handle.value) {
+      let json = JSON.parse(await (await handle.value.getFile()).text());
+      project.value = Project.from(json);
+
+      graph.fromJSON(project.value.cells);
+      if (project.value.transform) {
+        graph.scale(project.value.transform.sx, project.value.transform.sy);
+        graph.translate(project.value.transform.tx, project.value.transform.ty);
+      }
+
+      origin = clone(project.value);
+    }
+  }
+  /**
+   * Update
+   */
+  function update() {
+    project.value.cells = graph.toJSON().cells;
+  }
+  /**
+   * Save
+   */
+  async function save() {
+    if (handle.value) {
+      let stream = await handle.value.createWritable();
+      await stream.write(JSON.stringify(project.value));
+      await stream.close();
+    } else {
+      handle.value = await window.showSaveFilePicker({ types: [{ accept: { 'application/json': ['.json'] } }], suggestedName: 'logic-deduction-project.json' });
+      let stream = await handle.value.createWritable();
+      await stream.write(JSON.stringify(project.value));
+      await stream.close();
+    }
+
+    origin = clone(project.value);
   }
 </script>
 

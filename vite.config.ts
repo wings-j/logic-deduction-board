@@ -11,5 +11,5 @@ export default defineConfig({
       '@': resolve(__dirname, 'src')
     }
   },
-  plugins: [Vue(), UnpluginElementPlus({}), SvgLoader()]
+  plugins: [Vue(), UnpluginElementPlus({}), SvgLoader({ defaultImport: 'url' })]
 });
