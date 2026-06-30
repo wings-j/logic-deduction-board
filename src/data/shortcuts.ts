@@ -12,5 +12,3 @@ const shortcuts = {
 };
 
 export { shortcuts };
-
-// TODO 节点快捷键

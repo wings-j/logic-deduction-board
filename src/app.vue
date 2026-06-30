@@ -3,41 +3,52 @@
   import Svg_End from '@/assets/images/templates/end.svg?component';
   import Svg_Start from '@/assets/images/templates/start.svg?component';
   import Svg_Thought from '@/assets/images/templates/thought.svg?component';
+  import { symbol_project } from '@/core/constant';
   import { language, languages, t } from '@/core/i18n';
   import { initiate } from '@/core/initiate';
   import { shortcuts } from '@/data/shortcuts';
-  import { Entity, type EntityType } from '@/types/entity';
+  import { Entity, ThoughtEntity, type EntityType } from '@/types/entity';
   import { Project } from '@/types/project';
-  import { Dnd, Graph } from '@antv/x6';
+  import { wait } from '@/utils/wait';
+  import { Cell, Dnd, Graph } from '@antv/x6';
   import { getTeleport } from '@antv/x6-vue-shape';
-  import { useDebounceFn } from '@vueuse/core';
+  import { useDebounceFn, useThrottleFn } from '@vueuse/core';
   import { clone } from '@wings-j/clone';
   import { ElDropdown, ElDropdownItem, ElDropdownMenu, ElMenu, ElMenuItem, ElMessage, ElPopover, ElSubMenu, ElTable, ElTableColumn } from 'element-plus';
   import { isEqual } from 'es-toolkit';
-  import { onBeforeUnmount, onMounted, ref } from 'vue';
+  import { onBeforeUnmount, onMounted, provide, ref, useTemplateRef, watch } from 'vue';
 
-  const handle = ref<FileSystemFileHandle>();
-  const project = ref<Project>(new Project());
+  const $wrap = useTemplateRef('wrap');
+  const $container = useTemplateRef('container');
+  const project = ref(new Project());
+  let handle: FileSystemFileHandle | undefined;
   let origin: Project = clone(project.value);
   let graph: Graph;
   let dnd: Dnd;
   let TeleportContainer = getTeleport();
-  let throttledUpdate = useDebounceFn(update, 1000);
+  let debouncedResize = useDebounceFn(async () => {
+    let rect = $wrap.value?.getBoundingClientRect();
+    if (rect) {
+      graph.resize(rect.width, rect.height);
+    }
+  }, 300);
+  let throttledUpdate = useThrottleFn(update, 300, true);
 
-  if (import.meta.hot) {
-    handle.value = import.meta.hot.data['handle'];
+  provide(symbol_project, project);
 
-    open();
-  }
+  watch(
+    project,
+    () => {
+      throttledUpdate();
+    },
+    { deep: true }
+  );
 
-  onMounted(() => {
-    let objects = initiate('.container');
+  onMounted(async () => {
+    let objects = initiate($container.value!);
     graph = objects.graph;
     dnd = objects.dnd;
 
-    graph.on('cell:added', throttledUpdate);
-    graph.on('cell:removed', throttledUpdate);
-    graph.on('cell:changed', throttledUpdate);
     graph.on('scale', () => {
       let { sx, sy } = graph.scale();
       project.value.transform.sx = sx;
@@ -48,19 +59,56 @@
       project.value.transform.tx = tx;
       project.value.transform.ty = ty;
     });
+    const throttledChange = useThrottleFn(handle_cell_change, 500, true);
+    graph.on('cell:added', throttledChange);
+    graph.on('cell:removed', throttledChange);
+    graph.on('cell:changed', throttledChange);
 
-    window.addEventListener('keydown', handle_keydown);
     window.addEventListener('beforeunload', handle_unload);
+    window.addEventListener('resize', debouncedResize);
+    window.addEventListener('keydown', handle_keydown);
+
+    if (import.meta.hot) {
+      handle = import.meta.hot.data['handle'];
+
+      await open();
+      update();
+    }
+
+    await wait(100);
+
+    let svg = $container.value!.querySelector('.x6-graph-svg') as SVGSVGElement;
+    let defs = svg.querySelector('defs') as SVGDefsElement;
+    let marker = defs.querySelector('marker');
+    if (marker) {
+      marker = marker.cloneNode(true) as SVGMarkerElement;
+      marker.setAttribute('id', 'marker-active');
+      let path = marker.querySelector('path') as SVGPathElement;
+      path.setAttribute('fill', 'var(--color_orange)');
+      path.setAttribute('stroke', 'var(--color_orange)');
+
+      defs.appendChild(marker);
+    }
   });
   onBeforeUnmount(() => {
     if (import.meta.hot) {
-      import.meta.hot.data['handle'] = handle.value;
+      import.meta.hot.data['handle'] = handle;
     }
 
-    window.removeEventListener('keydown', handle_keydown);
     window.removeEventListener('beforeunload', handle_unload);
+    window.removeEventListener('resize', debouncedResize);
+    window.removeEventListener('keydown', handle_keydown);
   });
 
+  /**
+   * Handle Unload
+   * @param [ev] Event
+   */
+  function handle_unload(ev: BeforeUnloadEvent) {
+    if (!import.meta.hot && !isEqual(project.value, origin)) {
+      ev.preventDefault();
+    }
+  }
   /**
    * Handle Keyup
    * @param [ev] Event
@@ -75,15 +123,6 @@
     }
   }
   /**
-   * Handle Unload
-   * @param [ev] Event
-   */
-  function handle_unload(ev: BeforeUnloadEvent) {
-    if (!isEqual(project.value, origin)) {
-      ev.preventDefault();
-    }
-  }
-  /**
    * Handle Menu Select
    * @param [ev] Index
    */
@@ -93,9 +132,10 @@
         case 'open':
           {
             let res = await window.showOpenFilePicker({ types: [{ accept: { 'application/json': ['.json'] } }] });
-            handle.value = res[0];
+            handle = res[0];
 
             await open();
+            update();
           }
           break;
         case 'save':
@@ -118,15 +158,25 @@
    * @param [type] Type
    */
   async function handle_template_mousedown(ev: MouseEvent, type: EntityType) {
-    dnd.start(Entity.createNode(graph, type), ev);
+    let { entity, node } = Entity.create(graph, type);
+    project.value.entities.push(entity);
+    dnd.start(node, ev);
+  }
+  /**
+   * Handle Cell Update
+   */
+  function handle_cell_change() {
+    let cells = graph.toJSON().cells;
+    project.value.cells = cells;
+    project.value.entities = project.value.entities.filter(a => cells.some(b => b.data?.entity === a.id));
   }
 
   /**
    * Open
    */
   async function open() {
-    if (handle.value) {
-      let json = JSON.parse(await (await handle.value.getFile()).text());
+    if (handle) {
+      let json = JSON.parse(await (await handle.getFile()).text());
       project.value = Project.from(json);
 
       graph.fromJSON(project.value.cells);
@@ -142,19 +192,62 @@
    * Update
    */
   function update() {
-    project.value.cells = graph.toJSON().cells;
+    const getChain = (cell: Cell, array: Cell[] = []) => {
+      if (cell.isNode()) {
+        let edges = graph.getConnectedEdges(cell);
+        let previous = edges.find(b => b.shape === 'think' && (b.target as any).cell === cell.id);
+        if (previous) {
+          array.push(previous);
+
+          return getChain(previous, array);
+        } else {
+          return array;
+        }
+      } else if (cell.isEdge()) {
+        let source = graph.getCellById((cell.source as any).cell);
+        if (source) {
+          array.push(source);
+
+          return getChain(source, array);
+        } else {
+          return array;
+        }
+      } else {
+        return array;
+      }
+    };
+    const findInactive = (cell: Cell) => {
+      let chain = getChain(cell);
+
+      return chain.find(a => a.shape === 'thought' && !(a.data['entity'] as ThoughtEntity).active); // TODO get entity
+    };
+
+    for (let a of graph.getCells()) {
+      if (a.shape === 'thought') {
+        // TODO
+      } else if (a.shape === 'think') {
+        if (findInactive(a)) {
+          a.setAttrs({ line: { stroke: 'var(--color_disabled)' } });
+        } else {
+          a.setAttrs({ line: { stroke: 'var(--color_blue)' } });
+        }
+      }
+    }
   }
   /**
    * Save
    */
   async function save() {
-    if (handle.value) {
-      let stream = await handle.value.createWritable();
+    project.value.cells = graph.toJSON().cells;
+
+    if (handle) {
+      let stream = await handle.createWritable();
       await stream.write(JSON.stringify(project.value));
       await stream.close();
     } else {
-      handle.value = await window.showSaveFilePicker({ types: [{ accept: { 'application/json': ['.json'] } }], suggestedName: 'logic-deduction-project.json' });
-      let stream = await handle.value.createWritable();
+      handle = await window.showSaveFilePicker({ types: [{ accept: { 'application/json': ['.json'] } }], suggestedName: 'logic-deduction-project.json' });
+      let stream = await handle.createWritable();
+
       await stream.write(JSON.stringify(project.value));
       await stream.close();
     }
@@ -165,6 +258,7 @@
 
 <template>
   <div
+    class="menu"
     style="
       display: flex;
       align-items: center;
@@ -177,7 +271,7 @@
         0 2px 2px rgba(0, 0, 0, 0.03);
     "
   >
-    <el-menu class="menu" style="flex-grow: 1" popperClass="menu-popover" mode="horizontal" menuTrigger="click" closeOnClickOutside @select="handle_menu_select">
+    <el-menu style="flex-grow: 1" popperClass="menu-popover" mode="horizontal" menuTrigger="click" closeOnClickOutside @select="handle_menu_select">
       <el-sub-menu index="file">
         <template #title>{{ $t('File') }}</template>
         <el-menu-item index="open">{{ $t('Open') }}</el-menu-item>
@@ -234,7 +328,9 @@
       </el-table>
     </el-popover>
   </div>
-  <div class="container" style="height: calc(100vh - var(--el-menu-horizontal-height))"></div>
+  <div ref="wrap" style="height: calc(100vh - 40px)">
+    <div ref="container" class="container" style="width: 100%; height: 100%"></div>
+  </div>
   <TeleportContainer></TeleportContainer>
 
   <div
@@ -305,8 +401,16 @@
     --el-menu-active-color: var(--el-menu-text-color);
   }
   .container {
+    .x6-edge-selected {
+      path:nth-child(2) {
+        stroke: var(--color_orange);
+        marker-end: url(#marker-active);
+      }
+    }
     .el-textarea__inner {
       height: 100%;
     }
   }
 </style>
+
+// TODO 新建

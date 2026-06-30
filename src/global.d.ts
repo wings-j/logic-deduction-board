@@ -1,6 +1,5 @@
 /// <reference types="vite-svg-loader" />
 
-import type { Entity } from '@/types/entity';
 import type { Graph, Node } from '@antv/x6';
 import type { PortManager } from '@antv/x6/lib/model/port';
 
@@ -29,6 +28,10 @@ declare global {
 declare module '@antv/x6' {
   interface Cell {
     port: PortManager;
-    data: { entity: Entity };
+    data: { entity: string };
+  }
+  interface Edge {
+    source: { cell: string; port: string };
+    target: { cell: string; port: string };
   }
 }

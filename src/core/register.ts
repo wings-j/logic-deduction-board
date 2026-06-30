@@ -12,6 +12,7 @@ const injectAttributes = { circle: { r: 8, stroke: 'none', fill: 'var(--color_pu
 
 Graph.registerEdge('think', { inherits: 'edge', attrs: { line: { stroke: 'var(--color_blue)', strokeWidth: 4 } } });
 Graph.registerEdge('cue', { inherits: 'edge', attrs: { line: { stroke: 'var(--color_purple)', strokeWidth: 4 } } });
+
 register({
   shape: 'start',
   component: Start,
@@ -19,7 +20,13 @@ register({
   height: 40,
   ports: { groups: { output: { position: 'right', attrs: outputPortAttributes } }, items: [{ group: 'output' }] }
 });
-register({ shape: 'end', component: End, width: 120, height: 40, ports: { groups: { input: { position: 'left', attrs: inputPortAttributes } }, items: [{ group: 'input' }] } });
+register({
+  shape: 'end',
+  component: End,
+  width: 120,
+  height: 40,
+  ports: { groups: { input: { position: 'left', attrs: inputPortAttributes } }, items: [{ group: 'input' }] }
+});
 register({
   shape: 'clue',
   component: Clue,

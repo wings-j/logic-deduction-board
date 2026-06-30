@@ -1,20 +1,18 @@
 <script setup lang="ts">
+  import { symbol_project } from '@/core/constant';
   import type { ClueEntity } from '@/types/entity';
+  import { Project } from '@/types/project';
   import { ElInput } from 'element-plus';
-  import { inject, ref, watch } from 'vue';
+  import { computed, inject, type Ref } from 'vue';
 
+  const project = inject(symbol_project) as Ref<Project>;
   const node = (inject('getNode') as GetNode)();
-  const entity = node.data.entity as ClueEntity;
-
-  const text = ref(entity.text);
-
-  watch(text, value => {
-    entity.text = value;
-  });
+  const entity = computed(() => project.value.getEntity(node) as ClueEntity | undefined);
 </script>
 
 <template>
   <div
+    v-if="entity"
     style="
       display: flex;
       flex-direction: column;
@@ -28,7 +26,7 @@
     <div>
       <span style="color: white; font-size: var(--size_font-large)">{{ $t('Clue') }}</span>
     </div>
-    <el-input v-model="text" style="flex-grow: 1; margin-top: var(--gap_middle)" type="textarea" resize="none" @mousedown.stop @mousewheel.stop></el-input>
+    <el-input v-model="entity.text" style="flex-grow: 1; margin-top: var(--gap_middle)" type="textarea" resize="none" @mousedown.stop @mousewheel.stop></el-input>
   </div>
 </template>
 

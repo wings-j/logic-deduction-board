@@ -34,24 +34,24 @@ class Entity {
     }
   }
   /**
-   * Create Node
+   * Create
    * @param [graph] Graph
    * @param [type] Type
-   * @return Node
+   * @return Entity and Node
    */
-  static createNode(graph: Graph, type: EntityType) {
+  static create(graph: Graph, type: EntityType) {
     switch (type) {
       case 'start': {
-        return StartEntity.createNode(graph);
+        return StartEntity.create(graph);
       }
       case 'end': {
-        return EndEntity.createNode(graph);
+        return EndEntity.create(graph);
       }
       case 'thought': {
-        return ThoughtEntity.createNode(graph);
+        return ThoughtEntity.create(graph);
       }
       case 'clue': {
-        return ClueEntity.createNode(graph);
+        return ClueEntity.create(graph);
       }
       default:
         throw new Error(`Unknown Entity Type: '${type}'`);
@@ -107,15 +107,15 @@ class StartEntity extends Entity {
     return Object.assign(new StartEntity(), raw);
   }
   /**
-   * Create Node
+   * Create
    * @param [graph] Graph
-   * @return Node
+   * @return Entity and Node
    */
-  static createNode(graph: Graph) {
+  static create(graph: Graph) {
     let entity = new StartEntity();
-    let node = graph.createNode({ shape: 'start', data: { entity } });
+    let node = graph.createNode({ shape: 'start', data: { entity: entity.id } });
 
-    return node;
+    return { entity, node };
   }
   /**
    * Validate Connection of Direction
@@ -128,9 +128,7 @@ class StartEntity extends Entity {
    */
   static validateConnectionOfDirection(role: 'source' | 'target', _: Cell, __: Port, targetCell: Cell, targetPort: Port): boolean {
     if (role === 'source') {
-      let targetEntity = targetCell.data.entity as Entity;
-
-      return ['end', 'thought'].includes(targetEntity.type) && targetPort.group === 'input';
+      return ['end', 'thought'].includes(targetCell.shape) && targetPort.group === 'input';
     } else {
       return false;
     }
@@ -156,15 +154,15 @@ class EndEntity extends Entity {
     return Object.assign(new EndEntity(), raw);
   }
   /**
-   * Create Node
+   * Create
    * @param [graph] Graph
-   * @return Node
+   * @return Entity and Node
    */
-  static createNode(graph: Graph) {
+  static create(graph: Graph) {
     let entity = new EndEntity();
-    let node = graph.createNode({ shape: 'end', data: { entity } });
+    let node = graph.createNode({ shape: 'end', data: { entity: entity.id } });
 
-    return node;
+    return { entity, node };
   }
   /**
    * Validate Connection
@@ -177,9 +175,7 @@ class EndEntity extends Entity {
    */
   static validateConnectionOfDirection(role: 'source' | 'target', sourceCell: Cell, sourcePort: Port, _: Cell, __: Port): boolean {
     if (role === 'target') {
-      let sourceEntity = sourceCell.data.entity as Entity;
-
-      return ['start', 'thought'].includes(sourceEntity.type) && sourcePort.group === 'output';
+      return ['start', 'thought'].includes(sourceCell.shape) && sourcePort.group === 'output';
     } else {
       return false;
     }
@@ -205,15 +201,15 @@ class ThoughtEntity extends Entity {
     return Object.assign(new ThoughtEntity(), raw);
   }
   /**
-   * Create Node
+   * Create
    * @param [graph] Graph
-   * @return Node
+   * @return Entity and Node
    */
-  static createNode(graph: Graph) {
+  static create(graph: Graph) {
     let entity = new ThoughtEntity();
-    let node = graph.createNode({ shape: 'thought', data: { entity } });
+    let node = graph.createNode({ shape: 'thought', data: { entity: entity.id } });
 
-    return node;
+    return { entity, node };
   }
   /**
    * Validate Connection
@@ -226,13 +222,17 @@ class ThoughtEntity extends Entity {
    */
   static validateConnectionOfDirection(role: 'source' | 'target', sourceCell: Cell, sourcePort: Port, targetCell: Cell, targetPort: Port): boolean {
     if (role === 'source') {
-      let targetEntity = targetCell.data.entity as Entity;
-
-      return ['end', 'thought'].includes(targetEntity.type) && targetPort.group === 'input';
+      return ['end', 'thought'].includes(targetCell.shape) && targetPort.group === 'input';
     } else if (role === 'target') {
-      let sourceEntity = sourceCell.data.entity as Entity;
+      if (targetPort.group === 'input') {
+        let graph = targetCell.model!.graph as Graph;
+        let inputEdges = graph.getConnectedEdges(targetCell).filter(a => a.shape === 'think' && (a.target as any).cell === targetCell.id);
+        if (inputEdges.length) {
+          return false;
+        }
+      }
 
-      return ['start', 'thought', 'clue'].includes(sourceEntity.type) && ['output', 'provide'].includes(sourcePort.group as any);
+      return ['start', 'thought', 'clue'].includes(sourceCell.shape) && ['output', 'provide'].includes(sourcePort.group as any);
     } else {
       return false;
     }
@@ -261,15 +261,15 @@ class ClueEntity extends Entity {
     return Object.assign(new ClueEntity(), raw);
   }
   /**
-   * Create Node
+   * Create
    * @param [graph] Graph
-   * @return Node
+   * @return Entity and Node
    */
-  static createNode(graph: Graph) {
+  static create(graph: Graph) {
     let entity = new ClueEntity();
-    let node = graph.createNode({ shape: 'clue', data: { entity } });
+    let node = graph.createNode({ shape: 'clue', data: { entity: entity.id } });
 
-    return node;
+    return { entity, node };
   }
   /**
    * Validate Connection
@@ -282,9 +282,7 @@ class ClueEntity extends Entity {
    */
   static validateConnectionOfDirection(role: 'source' | 'target', _: Cell, __: Port, targetCell: Cell, targetPort: Port): boolean {
     if (role === 'source') {
-      let targetEntity = targetCell.data.entity as Entity;
-
-      return ['thought'].includes(targetEntity.type) && targetPort.group === 'inject';
+      return ['thought'].includes(targetCell.shape) && targetPort.group === 'inject';
     } else {
       return false;
     }
