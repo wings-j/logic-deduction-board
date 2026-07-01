@@ -18,5 +18,9 @@
   "MouseClick": "鼠标点击",
   "Thought": "想法",
   "Clue": "线索",
-  "ProjectSaved": "项目已保存"
+  "ProjectSaved": "项目已保存",
+  "New": "新建",
+  "SaveCurrentProject": "保存当前项目？",
+  "Yes": "是",
+  "No": "否"
 }

@@ -35,8 +35,6 @@ class Project {
       return this.entities.find(a => a.id === target);
     }
   }
-
-  // TODO 构建逻辑图
 }
 
 export { Project };

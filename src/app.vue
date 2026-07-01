@@ -7,20 +7,22 @@
   import { language, languages, t } from '@/core/i18n';
   import { initiate } from '@/core/initiate';
   import { shortcuts } from '@/data/shortcuts';
-  import { Entity, ThoughtEntity, type EntityType } from '@/types/entity';
+  import { Entity, type EntityType } from '@/types/entity';
   import { Project } from '@/types/project';
+  import { findInactiveEntity } from '@/utils/find-inactive-entity';
   import { wait } from '@/utils/wait';
-  import { Cell, Dnd, Graph } from '@antv/x6';
+  import { Dnd, Graph } from '@antv/x6';
   import { getTeleport } from '@antv/x6-vue-shape';
   import { useDebounceFn, useThrottleFn } from '@vueuse/core';
   import { clone } from '@wings-j/clone';
-  import { ElDropdown, ElDropdownItem, ElDropdownMenu, ElMenu, ElMenuItem, ElMessage, ElPopover, ElSubMenu, ElTable, ElTableColumn } from 'element-plus';
+  import { ElDropdown, ElDropdownItem, ElDropdownMenu, ElMenu, ElMenuItem, ElMessage, ElMessageBox, ElPopover, ElSubMenu, ElTable, ElTableColumn } from 'element-plus';
   import { isEqual } from 'es-toolkit';
-  import { onBeforeUnmount, onMounted, provide, ref, useTemplateRef, watch } from 'vue';
+  import { computed, onBeforeUnmount, onMounted, provide, ref, useTemplateRef, watch } from 'vue';
 
   const $wrap = useTemplateRef('wrap');
   const $container = useTemplateRef('container');
   const project = ref(new Project());
+  const unsaved = computed(() => !isEqual(project.value, origin));
   let handle: FileSystemFileHandle | undefined;
   let origin: Project = clone(project.value);
   let graph: Graph;
@@ -105,7 +107,7 @@
    * @param [ev] Event
    */
   function handle_unload(ev: BeforeUnloadEvent) {
-    if (!import.meta.hot && !isEqual(project.value, origin)) {
+    if (!import.meta.hot && unsaved.value) {
       ev.preventDefault();
     }
   }
@@ -129,6 +131,20 @@
   async function handle_menu_select(ev: string) {
     try {
       switch (ev) {
+        case 'new':
+          {
+            if (unsaved.value) {
+              let res = await ElMessageBox.confirm(t('SaveCurrentProject'), undefined, { confirmButtonText: t('Yes'), cancelButtonText: t('No'), type: 'warning' });
+              if (res === 'confirm') {
+                await save();
+              }
+            }
+
+            project.value = new Project();
+            graph.fromJSON(project.value.cells);
+            origin = clone(project.value);
+          }
+          break;
         case 'open':
           {
             let res = await window.showOpenFilePicker({ types: [{ accept: { 'application/json': ['.json'] } }] });
@@ -192,41 +208,9 @@
    * Update
    */
   function update() {
-    const getChain = (cell: Cell, array: Cell[] = []) => {
-      if (cell.isNode()) {
-        let edges = graph.getConnectedEdges(cell);
-        let previous = edges.find(b => b.shape === 'think' && (b.target as any).cell === cell.id);
-        if (previous) {
-          array.push(previous);
-
-          return getChain(previous, array);
-        } else {
-          return array;
-        }
-      } else if (cell.isEdge()) {
-        let source = graph.getCellById((cell.source as any).cell);
-        if (source) {
-          array.push(source);
-
-          return getChain(source, array);
-        } else {
-          return array;
-        }
-      } else {
-        return array;
-      }
-    };
-    const findInactive = (cell: Cell) => {
-      let chain = getChain(cell);
-
-      return chain.find(a => a.shape === 'thought' && !(a.data['entity'] as ThoughtEntity).active); // TODO get entity
-    };
-
     for (let a of graph.getCells()) {
-      if (a.shape === 'thought') {
-        // TODO
-      } else if (a.shape === 'think') {
-        if (findInactive(a)) {
+      if (a.shape === 'think') {
+        if (findInactiveEntity(project.value, graph, a)) {
           a.setAttrs({ line: { stroke: 'var(--color_disabled)' } });
         } else {
           a.setAttrs({ line: { stroke: 'var(--color_blue)' } });
@@ -274,6 +258,7 @@
     <el-menu style="flex-grow: 1" popperClass="menu-popover" mode="horizontal" menuTrigger="click" closeOnClickOutside @select="handle_menu_select">
       <el-sub-menu index="file">
         <template #title>{{ $t('File') }}</template>
+        <el-menu-item index="new">{{ $t('New') }}</el-menu-item>
         <el-menu-item index="open">{{ $t('Open') }}</el-menu-item>
         <el-menu-item index="save">{{ $t('Save') }}</el-menu-item>
       </el-sub-menu>
@@ -412,5 +397,3 @@
     }
   }
 </style>
-
-// TODO 新建

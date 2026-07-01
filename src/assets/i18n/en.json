@@ -18,5 +18,9 @@
   "MouseClick": "Mouse Click",
   "Thought": "Thought",
   "Clue": "Clue",
-  "ProjectSaved": "Project Saved"
+  "ProjectSaved": "Project Saved",
+  "New": "New",
+  "SaveCurrentProject": "Save current project?",
+  "Yes": "Yes",
+  "No": "No"
 }
