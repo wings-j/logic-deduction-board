@@ -24,7 +24,7 @@
     "
   >
     <div>
-      <span style="color: white; font-size: var(--size_font-large)">{{ $t('Clue') }}</span>
+      <span style="color: white; font-size: var(--size_font-sub)">{{ $t('Clue') }}</span>
     </div>
     <el-input v-model="entity.text" style="flex-grow: 1; margin-top: var(--gap_middle)" type="textarea" resize="none" @mousedown.stop @mousewheel.stop></el-input>
   </div>

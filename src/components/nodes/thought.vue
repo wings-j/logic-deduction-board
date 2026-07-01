@@ -22,7 +22,7 @@
     :style="{ backgroundColor: mute ? 'var(--color_background-dark)' : 'var(--color_blue)' }"
   >
     <div style="display: flex; align-items: center">
-      <span style="color: white; font-size: var(--size_font-large)">{{ $t('Thought') }}</span>
+      <span style="color: white; font-size: var(--size_font-sub)">{{ $t('Thought') }}</span>
       <el-switch v-model="entity.active" style="--el-switch-on-color: var(--color_green); --el-switch-off-color: var(--color_red); margin-left: auto" @mousedown.stop></el-switch>
     </div>
     <el-input v-model="entity.text" style="flex-grow: 1; margin-top: var(--gap_middle)" type="textarea" resize="none" @mousedown.stop @mousewheel.stop></el-input>

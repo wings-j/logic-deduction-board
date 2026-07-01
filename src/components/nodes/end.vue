@@ -1,27 +1,33 @@
-<script setup lang="ts"></script>
+<script setup lang="ts">
+  import { symbol_project } from '@/core/constant';
+  import type { EndEntity } from '@/types/entity';
+  import { Project } from '@/types/project';
+  import { ElInput } from 'element-plus';
+  import { computed, inject, type Ref } from 'vue';
+
+  const project = inject(symbol_project) as Ref<Project>;
+  const node = (inject('getNode') as GetNode)();
+  const entity = computed(() => project.value.getEntity(node) as EndEntity | undefined);
+</script>
 
 <template>
-  <div style="display: flex; height: 100%">
-    <svg style="width: 15%" viewBox="0 0 100 100" preserveAspectRatio="none">
-      <polygon points="0,50 100,0 100,100" fill="var(--color_green)"></polygon>
-    </svg>
-    <div
-      style="
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        width: 85%;
-        color: white;
-        font-size: var(--size_font-large);
-        font-weight: bold;
-        background-color: var(--color_green);
-        border-top-right-radius: var(--radius_sub);
-        border-bottom-right-radius: var(--radius_sub);
-      "
-    >
-      <span>{{ $t('End') }}</span>
+  <div
+    v-if="entity"
+    style="
+      display: flex;
+      flex-direction: column;
+      width: 100%;
+      height: 100%;
+      padding: var(--gap_sub) var(--gap_main);
+      background-color: var(--color_green);
+      border-radius: var(--radius_main);
+    "
+  >
+    <div>
+      <span style="color: white; font-size: var(--size_font-sub)">{{ $t('End') }}</span>
     </div>
+    <el-input v-model="entity.text" style="flex-grow: 1; margin-top: var(--gap_middle)" type="textarea" resize="none" @mousedown.stop @mousewheel.stop></el-input>
   </div>
 </template>
 
-<style scoped lang="scss"></style>
+<style scoped></style>

@@ -16,15 +16,15 @@ Graph.registerEdge('cue', { inherits: 'edge', attrs: { line: { stroke: 'var(--co
 register({
   shape: 'start',
   component: Start,
-  width: 120,
-  height: 40,
+  width: 240,
+  height: 160,
   ports: { groups: { output: { position: 'right', attrs: outputPortAttributes } }, items: [{ group: 'output' }] }
 });
 register({
   shape: 'end',
   component: End,
-  width: 120,
-  height: 40,
+  width: 240,
+  height: 160,
   ports: { groups: { input: { position: 'left', attrs: inputPortAttributes } }, items: [{ group: 'input' }] }
 });
 register({

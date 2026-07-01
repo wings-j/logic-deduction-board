@@ -140,6 +140,8 @@ class StartEntity extends Entity {
   constructor() {
     super('start');
   }
+
+  text = '';
 }
 /**
  * End Entity
@@ -187,6 +189,8 @@ class EndEntity extends Entity {
   constructor() {
     super('end');
   }
+
+  text = '';
 }
 /**
  * Thought Entity
